@@ -19,8 +19,8 @@ namespace {
 
     int random_number(int n) {
         static std::random_device dev;
-        //std::mt19937 rng(dev());
-        std::mt19937 rng(42);
+        std::mt19937 rng(dev());
+        //std::mt19937 rng(42);
         std::uniform_int_distribution<> uint_dist_n(0, n - 1);
         return uint_dist_n(rng);
     }
