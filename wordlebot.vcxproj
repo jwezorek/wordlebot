@@ -144,9 +144,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="wordlebot.cpp" />
+    <ClCompile Include="wordle_state.cpp" />
     <ClCompile Include="words.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="wordle_state.hpp" />
     <ClInclude Include="words.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
