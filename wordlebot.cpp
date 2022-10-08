@@ -25,8 +25,8 @@ int main()
             std::string guess;
             count++;
             if (result.empty()) {
-                std::cout << "wordlebot guesses '" << 
-                    (guess = wordlebot.initial_guess(25)) << "'\n";
+                guess = wordlebot.initial_guess(25);
+                std::cout << "wordlebot guesses '" << guess << "'\n";
             } else {
                 guess = wordlebot.guess(8);
                 if (!guess.empty()) {
@@ -37,13 +37,16 @@ int main()
                     break;
                 }
             }
+
             std::cout << "  => ";
             std::cin >> result;
+
             if (result != std::string(5, wbt::k_green)) {
                 wordlebot.insert(guess, result);
             } else {
                 state = game_state::success;
             }
+
         } while (result == "x");
     }
 
