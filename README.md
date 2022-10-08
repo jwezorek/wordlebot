@@ -24,3 +24,5 @@ wordlebot guesses 'verse'
 
   4/6
 ```
+
+(You can see the word frenquency problem in the above where it choose 'perse' over 'verse' presumably because the 'p' is more common than the 'v')
