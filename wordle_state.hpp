@@ -11,8 +11,6 @@ namespace wbt {
     constexpr char k_green = 'g';
     constexpr char k_yellow = 'y';
     constexpr char k_gray = '-';
-    constexpr char k_quit = 'q';
-    constexpr char k_unknown_word = 'x';
 
     class wordle_state {
         const std::vector<std::string>& words_by_score_;

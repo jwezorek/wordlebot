@@ -3,10 +3,13 @@
 
 namespace {
 
+    constexpr char k_quit = 'q';
+    constexpr char k_unknown_word = 'x';
     constexpr int k_max_guesses = 6;
     constexpr int k_score_threshold = 3;
-    const auto k_quit_str = std::string(1, wbt::k_quit);
-    const auto k_unknown_word_str = std::string(1, wbt::k_unknown_word);
+
+    const auto k_quit_str = std::string(1, k_quit);
+    const auto k_unknown_word_str = std::string(1, k_unknown_word);
     const auto k_win_result = std::string(5, wbt::k_green);
 
     enum class game_state {
@@ -16,10 +19,12 @@ namespace {
     };
 
     bool play_wordle() {
+        
         wbt::wordle_state wordlebot(k_score_threshold);
         std::string result;
         int count = 0;
         game_state state = game_state::in_progress;
+
         while (state == game_state::in_progress && count < k_max_guesses) {
             std::cout << "\n";
             do {
@@ -69,7 +74,6 @@ namespace {
 
         return true;
     }
-
 }
 
 int main()
