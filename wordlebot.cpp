@@ -4,6 +4,7 @@
 namespace {
 
     constexpr int k_max_guesses = 6;
+    constexpr int k_score_threshold = 3;
 
     enum class game_state {
         in_progress,
@@ -15,7 +16,7 @@ namespace {
 
 int main()
 {
-    wbt::wordle_state wordlebot;
+    wbt::wordle_state wordlebot(k_score_threshold);
     std::string result;
     int count = 0;
     game_state state = game_state::in_progress;

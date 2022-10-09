@@ -2,6 +2,7 @@
 #include "words.hpp"
 #include <range/v3/all.hpp>
 #include <random>
+#include <iostream>
 
 namespace r = ranges;
 namespace rv = ranges::views;
@@ -93,31 +94,58 @@ bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
             return (remaining == 0);
 }
 
-
-wbt::wordle_state::wordle_state() :
+wbt::wordle_state::wordle_state(int threshold) :
     words_by_score_(wbt::word_list_by_score()),
-    must_be_({ 0,0,0,0,0 })
+    words_by_freq_(wbt::word_list_by_freqency()),
+    must_be_({ 0,0,0,0,0 }),
+    freq_vs_score_threshold_(threshold)
 {}
+
+int wbt::wordle_state::current_score() const {
+    int yellow_count = r::accumulate(
+        must_have_somewhere_ | 
+            rv::transform([](const auto& p) {return p.second; }),
+        0
+    );
+    int green_count = r::accumulate(
+        must_be_ | rv::transform([](char ch) {return (ch > 0) ? 1 : 0; }),
+        0
+    );
+    return 2 * green_count + yellow_count;
+}
 
 std::string wbt::wordle_state::initial_guess(int n) {
     return words_by_score_[random_number(n)];
 }
 
 std::string wbt::wordle_state::guess(int n) const {
-    auto guesses = words_by_score_ |
+    const std::vector<std::string>* in_play_word_list =
+        (current_score() > freq_vs_score_threshold_) ?
+        &words_by_freq_ :
+        &words_by_score_;
+
+    /*
+    if (in_play_word_list == &words_by_freq_) {
+        std::cout << "using words by frequency\n";
+    } else {
+        std::cout << "using words by score\n";
+    }
+    */
+
+    auto guesses = *in_play_word_list |
         rv::remove_if(
             [this](const auto& word) {
                 return !is_valid_guess(word);
             }
         ) |
         rv::take(n) |
-                r::to_vector;
+        r::to_vector;
 
-            if (guesses.empty()) {
-                return {};
-            }
+     if (guesses.empty()) {
+         return {};
+     }
 
-            return random_word(guesses);
+     return random_word(guesses);
 }
 
 bool wbt::wordle_state::insert(const std::string& insertee, const std::string& result) {
@@ -136,29 +164,40 @@ bool wbt::wordle_state::insert(const std::string& insertee, const std::string& r
     for (auto [i, insert_letter] : rv::enumerate(insertee)) {
         auto value = result[i];
         switch (value) {
-        case k_green:
-            // green means the ith guess letter must be 'insert_letter'
-            must_be_[i] = insert_letter;
-            greens_and_yellows.insert(insert_letter);
-            break;
-        case k_yellow:
-            // yellow means the ith letter must not be 'insert_letter' but
-            // 'insert_letter' must be used somewhere else.
-            if (must_not_be_[i].find(insert_letter) == must_not_be_[i].end()) {
-                must_not_be_[i].insert(insert_letter);
-                must_have_somewhere[insert_letter]++;
-            }
-            greens_and_yellows.insert(insert_letter);
-            break;
-        case k_gray:
-            // gray means the ith letter must not be 'insert_letter'
-            must_not_be_[i].insert(insert_letter);
-            break;
+            case k_green: {
+                    // green means the ith guess letter must be 'insert_letter'
+                    must_be_[i] = insert_letter;
+
+                    // remove a yellow from global state if there is one this green fulfills.
+                    auto iter = must_have_somewhere_.find(insert_letter);
+                    if (iter != must_have_somewhere_.end() && iter->second > 0) {
+                        iter->second--;
+                    }
+                    // maintain a set of greens and yellow just in this word...
+                    greens_and_yellows.insert(insert_letter);
+                }   
+                break;
+            case k_yellow: {
+                    // yellow means the ith letter must not be 'insert_letter' but
+                    // 'insert_letter' must be used somewhere else.
+                    if (must_not_be_[i].find(insert_letter) == must_not_be_[i].end()) {
+                        must_not_be_[i].insert(insert_letter);
+                        must_have_somewhere[insert_letter]++;
+                    }
+                    // maintain a set of greens and yellow just in this word...
+                    greens_and_yellows.insert(insert_letter);
+                }
+                break;
+            case k_gray: {
+                    // gray means the ith letter must not be 'insert_letter'
+                    must_not_be_[i].insert(insert_letter);
+                }
+                break;
         }
     }
 
     // gray also means if the gray letter is not a yellow or green
-    // elsewhere in this insertee then it must not be anywhere.
+    // elsewhere in insertee then it must not be anywhere.
     for (auto letter : insertee) {
         if (greens_and_yellows.find(letter) == greens_and_yellows.end()) {
             cant_have_anywhere_.insert(letter);

@@ -2781,6 +2781,24 @@ namespace {
         { "zooms" , 0.495095 , 0.000307 }, { "zoons" , 0.536089 , 0.000000 }, { "zoril" , 0.611634 , 0.000000 },
         { "zowie" , 0.597189 , 0.000000 }, { "zymes" , 0.604460 , 0.000000 }
     };
+
+    std::vector<std::string> order_words_by(const std::function<double(const word_info&)>& key_fn) {
+        auto key_to_word = word_list |
+            rv::transform(
+                [key_fn](const auto& wi)->std::multimap<double, std::string>::value_type {
+                    return { key_fn(wi), wi.word };
+                }
+            ) | r::to<std::multimap<double, std::string>>();
+
+        return key_to_word |
+            rv::transform(
+                [](const auto& item) {
+                    return item.second;
+                }
+            ) |
+            rv::reverse |
+            r::to_vector;
+    }
 }
 
 const std::vector<std::string>& wbt::word_list_alphabetic() {
@@ -2798,25 +2816,26 @@ const std::vector<std::string>& wbt::word_list_alphabetic() {
 
 const std::vector<std::string>& wbt::word_list_by_score() {
     static std::vector<std::string> by_score_word_list;
-    if (by_score_word_list.empty()) {
-        auto score_to_word = word_list |
-            rv::transform(
-                [](const auto& wi)->std::multimap<double, std::string>::value_type {
-                    return { wi.score, wi.word };
-                }
-        ) | r::to<std::multimap<double, std::string>>();
 
-        by_score_word_list = score_to_word |
-            rv::transform(
-                [](const auto& item) {
-                    return item.second;
-                }
-        ) | 
-        rv::reverse |
-        r::to_vector;
+    if (by_score_word_list.empty()) {
+        by_score_word_list = order_words_by(
+            [](const word_info& wi) {return wi.score; }
+        );
     }
 
     return by_score_word_list;
+}
+
+const std::vector<std::string>& wbt::word_list_by_freqency() {
+    static std::vector<std::string> by_freq_word_list;
+
+    if (by_freq_word_list.empty()) {
+        by_freq_word_list = order_words_by(
+            [](const word_info& wi) {return wi.freq; }
+        );
+    }
+
+    return by_freq_word_list;
 }
 
 const std::unordered_map<std::string, double>& wbt::word_score_table() {
