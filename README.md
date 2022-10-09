@@ -7,15 +7,24 @@ The currently it works as follows:
 
   1. Wordlebot has a list of five letter words along with their 'score' and their frequency. 
   
-    * Given 'guessed'  and 'hidden' we consider the score of a wordle play as two times the number of green tiles yielded by playing guessed against hidden plus the number of yellow tiles. The score assigned to each word, then, is the normalized expected value of this score for a given guessed word if the hidden word is selected by a uniformly distributed random variable. I precomputed these number in code not included here. 
-	
-	* Frequency is the normalized counts of the word appearances in some corpus. I found these counts "unigram_freq.csv" on Kaggle, but may end up using some other source.
-  
+    - score  
+      Given 'guessed'  and 'hidden' we consider the score of a wordle play as two times the number of 
+      green tiles yielded by playing guessed against hidden plus the number of yellow tiles. The score 
+      assigned to each word, then, is the normalized expected value of this score for a given guessed 
+      word if the hidden word is selected by a uniformly distributed random variable. I precomputed 
+      these number in code not included here. 
+      
+    - Frequency  
+      is the normalized counts of the word appearances in some corpus. I found these counts 
+      "unigram_freq.csv" on Kaggle, but may end up using some other source.
+      
   2. Wordlebot's initial guess is one of the top n words ranked by score, where n is currently 25.
   
-  3. After the initial guess, Wordlebot continues guessing by randomly selecting one of the top n words ranked by score that are valid given the game state, where n is now 8, until the score of the games state (again 2 x number of green + number of yellow) exceeds a threshold.
+  3. After the initial guess, Wordlebot continues guessing by randomly selecting one of the top n words ranked by score that are valid given the game state, 
+     where n is now 8, until the score of the games state (again 2 x number of green + number of yellow) exceeds a threshold.
   
-  4. After the score of the game state exceeds a threshold, currently 3, it begins selecting from the top n words ranked by frequency that are valid given the game state
+  4. After the score of the game state exceeds a threshold, currently 3, it begins selecting from the top n words ranked by frequency 
+     that are valid given the game state
 
 Sample session below, where the hidden word is 'stray'.
 
