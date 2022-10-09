@@ -23,15 +23,6 @@ namespace {
 
 }
 
-bool wbt::wordle_state::is_valid_result(const std::string& result) const {
-    for (auto ch : result) {
-        if (ch != k_green && ch != k_yellow && ch != k_gray) {
-            return false;
-        }
-    }
-    return true;
-}
-
 bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
 
     if (guess_history_.find(guess) != guess_history_.end()) {
@@ -119,18 +110,15 @@ std::string wbt::wordle_state::initial_guess(int n) {
 }
 
 std::string wbt::wordle_state::guess(int n) const {
-    const std::vector<std::string>* in_play_word_list =
-        (current_score() > freq_vs_score_threshold_) ?
-        &words_by_freq_ :
-        &words_by_score_;
-
-    /*
-    if (in_play_word_list == &words_by_freq_) {
+    bool use_freq_rank = current_score() > freq_vs_score_threshold_;
+    const std::vector<std::string>* in_play_word_list = use_freq_rank ?
+            &words_by_freq_ : &words_by_score_;
+    
+    if (use_freq_rank) {
         std::cout << "using words by frequency\n";
     } else {
         std::cout << "using words by score\n";
     }
-    */
 
     auto guesses = *in_play_word_list |
         rv::remove_if(
@@ -145,17 +133,34 @@ std::string wbt::wordle_state::guess(int n) const {
          return {};
      }
 
+     if (guesses.size() < n) {
+         return guesses.front();
+     }
+
+     if (use_freq_rank) {
+
+         // don't use a zero frequency word unless we have to...
+
+         bool has_nonzero_freq_word = r::find_if(
+                 guesses,
+                 [](const auto& word) {
+                     return word_frequency(word) > 0.0;
+                 }
+             ) != guesses.end();
+         if (has_nonzero_freq_word) {
+             guesses = guesses |
+                 rv::remove_if(
+                     [](const auto& word) {
+                         return word_frequency(word) == 0.0;
+                     }
+             ) | r::to_vector;
+         }
+     }
+
      return random_word(guesses);
 }
 
 bool wbt::wordle_state::insert(const std::string& insertee, const std::string& result) {
-    if (result == "x") {
-        return true;
-    }
-
-    if (!is_valid_result(result)) {
-        return false;
-    }
 
     guess_history_.insert(insertee);
 
@@ -216,5 +221,19 @@ bool wbt::wordle_state::insert(const std::string& insertee, const std::string& r
             }
         }
     }
+    return true;
+}
+
+bool wbt::is_valid_result_string(const std::string& result) {
+    if (result.size() != 5) {
+        return false;
+    }
+
+    for (auto ch : result) {
+        if (ch != k_green && ch != k_yellow && ch != k_gray) {
+            return false;
+        }
+    }
+
     return true;
 }

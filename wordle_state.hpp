@@ -11,6 +11,8 @@ namespace wbt {
     constexpr char k_green = 'g';
     constexpr char k_yellow = 'y';
     constexpr char k_gray = '-';
+    constexpr char k_quit = 'q';
+    constexpr char k_unknown_word = 'x';
 
     class wordle_state {
         const std::vector<std::string>& words_by_score_;
@@ -22,7 +24,6 @@ namespace wbt {
         std::set<char> cant_have_anywhere_;
         int freq_vs_score_threshold_;
 
-        bool is_valid_result(const std::string& result) const;
         bool is_valid_guess(const std::string& guess) const;
 
     public:
@@ -32,5 +33,7 @@ namespace wbt {
         std::string guess(int n) const;
         bool insert(const std::string& insertee, const std::string& result);
     };
+
+    bool is_valid_result_string(const std::string& word);
 
 }

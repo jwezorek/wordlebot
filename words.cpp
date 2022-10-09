@@ -2801,19 +2801,6 @@ namespace {
     }
 }
 
-const std::vector<std::string>& wbt::word_list_alphabetic() {
-    static std::vector<std::string> alphabetic_word_list;
-    if (alphabetic_word_list.empty()) {
-        alphabetic_word_list = word_list |
-            rv::transform(
-                [](const auto& wi) {
-                    return wi.word;
-                }
-        ) | r::to_vector;
-    }
-    return alphabetic_word_list;
-}
-
 const std::vector<std::string>& wbt::word_list_by_score() {
     static std::vector<std::string> by_score_word_list;
 
@@ -2838,15 +2825,18 @@ const std::vector<std::string>& wbt::word_list_by_freqency() {
     return by_freq_word_list;
 }
 
-const std::unordered_map<std::string, double>& wbt::word_score_table() {
-    static std::unordered_map<std::string, double> tbl;
-    if (tbl.empty()) {
-        tbl = word_list |
+double wbt::word_frequency(const std::string& word) {
+    static std::unordered_map<std::string, double> word_to_freq;
+    if (word_to_freq.empty()) {
+        word_to_freq = word_list |
             rv::transform(
-                [](const auto& wi)->std::unordered_map<std::string, double>::value_type {
-                    return { wi.word, wi.score };
+                [](const auto& wi)->std::pair<std::string, double> {
+                    return {
+                        wi.word,
+                        wi.freq
+                    };
                 }
         ) | r::to<std::unordered_map<std::string, double>>();
     }
-    return tbl;
+    return word_to_freq.at(word);
 }
