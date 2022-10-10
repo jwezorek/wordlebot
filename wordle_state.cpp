@@ -4,6 +4,8 @@
 #include <random>
 #include <iostream>
 
+/*------------------------------------------------------------------------------------------------*/
+
 namespace r = ranges;
 namespace rv = ranges::views;
 
@@ -25,37 +27,36 @@ namespace {
 
 bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
 
+    // if it was already used it's not a valid guess
     if (guess_history_.find(guess) != guess_history_.end()) {
         return false;
     }
 
+    // if it contains a letter known not to be in the hidden word it is not a valid guess.
     for (auto letter : guess) {
         if (cant_have_anywhere_.find(letter) != cant_have_anywhere_.end()) {
             return false;
         }
     }
 
+    // all the known green letters must be fullfilled.
     auto must_have_somewhere = must_have_somewhere_;
-
     for (auto [guess_letter, must_be_letter] : rv::zip(guess, must_be_)) {
-        if (must_be_letter) {
-            if (must_be_letter != guess_letter) {
-                return false;
-            } else {
-                auto iter = must_have_somewhere.find(must_be_letter);
-                if (iter != must_have_somewhere.end() && iter->second != 0) {
-                    must_have_somewhere[must_be_letter]--;
-                }
-            }
+        if (must_be_letter && must_be_letter != guess_letter) {
+            return false;
         }
     }
 
+    // it can't have a guess letter that yielded yellow in some location in the same
+    // location where it is known to be yellow.
     for (const auto& [guess_letter, must_not_be_set] : rv::zip(guess, must_not_be_)) {
         if (must_not_be_set.find(guess_letter) != must_not_be_set.end()) {
             return false;
         }
     }
 
+    // do the letters that don't fulfill green positions fulfill all of the known
+    // yellow letters?
     auto leftovers = rv::zip(guess, must_be_) |
         rv::transform(
             [](const auto& pair)->char {
@@ -66,23 +67,20 @@ bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
             [](char letter) {
                 return letter == 0;
             }
-            ) | r::to_vector;
+        ) | r::to_vector;
 
-            for (auto letter : leftovers) {
-                auto iter = must_have_somewhere.find(letter);
-                if (iter != must_have_somewhere.end() && iter->second > 0) {
-                    iter->second--;
-                }
-            }
+    for (auto letter : leftovers) {
+        auto iter = must_have_somewhere.find(letter);
+        if (iter != must_have_somewhere.end() && iter->second > 0) {
+            iter->second--;
+        }
+    }
 
-            auto remaining = r::accumulate(
-                must_have_somewhere |
-                rv::transform(
-                    [](const auto& p) { return p.second; }
-                ),
-                0
-            );
-            return (remaining == 0);
+    auto remaining = r::accumulate( 
+        must_have_somewhere | rv::transform( [](const auto& p) { return p.second; }),
+        0
+    );
+    return (remaining == 0);
 }
 
 wbt::wordle_state::wordle_state(int threshold) :
@@ -93,13 +91,13 @@ wbt::wordle_state::wordle_state(int threshold) :
 {}
 
 int wbt::wordle_state::current_score() const {
-    int yellow_count = r::accumulate(
-        must_have_somewhere_ | 
-            rv::transform([](const auto& p) {return p.second; }),
-        0
-    );
+    auto must_have_somewhere_counts = must_have_somewhere_ |
+        rv::transform([](const auto& p) {return p.second; });
+    auto must_be_counts = must_be_ | rv::transform([](char ch) {return (ch > 0) ? 1 : 0; });
+
+    int yellow_count = r::accumulate(must_have_somewhere_counts, 0);
     int green_count = r::accumulate(
-        must_be_ | rv::transform([](char ch) {return (ch > 0) ? 1 : 0; }),
+        must_be_counts,
         0
     );
     return 2 * green_count + yellow_count;
@@ -111,15 +109,15 @@ std::string wbt::wordle_state::initial_guess(int n) {
 
 std::string wbt::wordle_state::guess(int n) const {
     bool use_freq_rank = current_score() > freq_vs_score_threshold_;
-    const std::vector<std::string>* in_play_word_list = use_freq_rank ?
-            &words_by_freq_ : &words_by_score_;
-    
+    const std::vector<std::string>* in_play_word_list = 
+        use_freq_rank ? &words_by_freq_ : &words_by_score_;
+    /*
     if (use_freq_rank) {
         std::cout << "using words by frequency\n";
     } else {
         std::cout << "using words by score\n";
     }
-
+    */
     auto guesses = *in_play_word_list |
         rv::remove_if(
             [this](const auto& word) {
@@ -138,9 +136,7 @@ std::string wbt::wordle_state::guess(int n) const {
      }
 
      if (use_freq_rank) {
-
          // don't use a zero frequency word unless we have to...
-
          bool has_nonzero_freq_word = r::find_if(
                  guesses,
                  [](const auto& word) {
