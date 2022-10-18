@@ -7,6 +7,8 @@ namespace {
     constexpr char k_unknown_word = 'x';
     constexpr int k_max_guesses = 6;
     constexpr int k_score_threshold = 3;
+    constexpr int k_initial_guesses = 10;
+    constexpr int k_guesses = 3;
 
     const auto k_quit_str = std::string(1, k_quit);
     const auto k_unknown_word_str = std::string(1, k_unknown_word);
@@ -31,10 +33,10 @@ namespace {
                 std::string guess;
                 count++;
                 if (result.empty()) {
-                    guess = wordlebot.initial_guess(10);
+                    guess = wordlebot.initial_guess(k_initial_guesses);
                     std::cout << "wordlebot guesses '" << guess << "'\n";
                 } else {
-                    guess = wordlebot.guess(5);
+                    guess = wordlebot.guess(k_guesses);
                     if (!guess.empty()) {
                         std::cout << "wordlebot guesses '" << guess << "'\n";
                     } else {
