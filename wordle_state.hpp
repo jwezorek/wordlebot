@@ -32,6 +32,7 @@ namespace wbt {
         std::string initial_guess(int n);
         std::string guess(int n) const;
         bool insert(const std::string& insertee, const std::string& result);
+        int valid_words_remaining() const;
     };
 
     bool is_valid_result_string(const std::string& word);

@@ -6,7 +6,7 @@ namespace {
     constexpr char k_quit = 'q';
     constexpr char k_unknown_word = 'x';
     constexpr int k_max_guesses = 6;
-    constexpr int k_score_threshold = 3;
+    constexpr int k_endgame_threshold = 13;
     constexpr int k_initial_guesses = 10;
     constexpr int k_guesses = 3;
 
@@ -22,7 +22,7 @@ namespace {
 
     bool play_wordle() {
         
-        wbt::wordle_state wordlebot(k_score_threshold);
+        wbt::wordle_state wordlebot(k_endgame_threshold);
         std::string result;
         int count = 0;
         game_state state = game_state::in_progress;
@@ -61,6 +61,7 @@ namespace {
 
                 if (result != k_win_result) {
                     wordlebot.insert(guess, result);
+                    //std::cout << "words left: " << wordlebot.valid_words_remaining() << "\n";
                 } else {
                     state = game_state::success;
                 }

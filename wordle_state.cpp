@@ -108,7 +108,7 @@ std::string wbt::wordle_state::initial_guess(int n) {
 }
 
 std::string wbt::wordle_state::guess(int n) const {
-    bool use_freq_rank = current_score() > freq_vs_score_threshold_;
+    bool use_freq_rank = valid_words_remaining() < freq_vs_score_threshold_;
     const std::vector<std::string>* in_play_word_list = 
         use_freq_rank ? &words_by_freq_ : &words_by_score_;
     /*
@@ -218,6 +218,19 @@ bool wbt::wordle_state::insert(const std::string& insertee, const std::string& r
         }
     }
     return true;
+}
+
+int wbt::wordle_state::valid_words_remaining() const {
+    return static_cast<int>(
+        r::distance(
+            words_by_score_ |
+            rv::remove_if(
+                [this](const std::string& word)->bool {
+                    return !is_valid_guess(word);
+                }
+            )
+        )
+    );
 }
 
 bool wbt::is_valid_result_string(const std::string& result) {
