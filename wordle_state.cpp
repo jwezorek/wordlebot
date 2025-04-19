@@ -1,13 +1,14 @@
 #include "wordle_state.hpp"
 #include "words.hpp"
-#include <range/v3/all.hpp>
 #include <random>
 #include <iostream>
+#include <ranges>
+#include <numeric>
 
 /*------------------------------------------------------------------------------------------------*/
 
-namespace r = ranges;
-namespace rv = ranges::views;
+namespace r = std::ranges;
+namespace rv = std::ranges::views;
 
 namespace {
 
@@ -63,11 +64,11 @@ bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
                 auto [guess_letter, must_be_letter] = pair;
                 return (guess_letter != must_be_letter) ? guess_letter : 0;
             }
-        ) | rv::remove_if(
+        ) | rv::filter(
             [](char letter) {
-                return letter == 0;
+                return letter != 0;
             }
-        ) | r::to_vector;
+        ) | r::to<std::vector>();
 
     for (auto letter : leftovers) {
         auto iter = must_have_somewhere.find(letter);
@@ -76,9 +77,10 @@ bool wbt::wordle_state::is_valid_guess(const std::string& guess) const {
         }
     }
 
-    auto remaining = r::accumulate( 
+    auto remaining = r::fold_left( 
         must_have_somewhere | rv::transform( [](const auto& p) { return p.second; }),
-        0
+        0,
+        std::plus<>()
     );
     return (remaining == 0);
 }
@@ -95,10 +97,11 @@ int wbt::wordle_state::current_score() const {
         rv::transform([](const auto& p) {return p.second; });
     auto must_be_counts = must_be_ | rv::transform([](char ch) {return (ch > 0) ? 1 : 0; });
 
-    int yellow_count = r::accumulate(must_have_somewhere_counts, 0);
-    int green_count = r::accumulate(
+    int yellow_count = r::fold_left(must_have_somewhere_counts, 0, std::plus<>());
+    int green_count = r::fold_left(
         must_be_counts,
-        0
+        0,
+        std::plus<>()
     );
     return 2 * green_count + yellow_count;
 }
@@ -119,13 +122,13 @@ std::string wbt::wordle_state::guess(int n) const {
     }
     */
     auto guesses = *in_play_word_list |
-        rv::remove_if(
+        rv::filter(
             [this](const auto& word) {
-                return !is_valid_guess(word);
+                return is_valid_guess(word);
             }
         ) |
         rv::take(n) |
-        r::to_vector;
+        r::to<std::vector>();
 
      if (guesses.empty()) {
          return {};
@@ -145,11 +148,11 @@ std::string wbt::wordle_state::guess(int n) const {
              ) != guesses.end();
          if (has_nonzero_freq_word) {
              guesses = guesses |
-                 rv::remove_if(
+                 rv::filter(
                      [](const auto& word) {
-                         return word_frequency(word) == 0.0;
+                         return word_frequency(word) != 0.0;
                      }
-             ) | r::to_vector;
+             ) | r::to<std::vector>();
          }
      }
 
@@ -224,9 +227,9 @@ int wbt::wordle_state::valid_words_remaining() const {
     return static_cast<int>(
         r::distance(
             words_by_score_ |
-            rv::remove_if(
+            rv::filter(
                 [this](const std::string& word)->bool {
-                    return !is_valid_guess(word);
+                    return is_valid_guess(word);
                 }
             )
         )

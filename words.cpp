@@ -1,11 +1,12 @@
 #include "words.hpp"
-#include <range/v3/all.hpp>
+#include <ranges>
 #include <map>
+#include <functional>
 
 /*------------------------------------------------------------------------------------------------*/
 
-namespace r = ranges;
-namespace rv = ranges::views;
+namespace r = std::ranges;
+namespace rv = std::ranges::views;
 
 namespace {
 
@@ -2780,7 +2781,7 @@ namespace {
         { "zonal" , 0.563984 , 0.000438 }, { "zoned" , 0.612445 , 0.000753 }, { "zoner" , 0.657521 , 0.000000 },
         { "zones" , 0.806690 , 0.007923 }, { "zooid" , 0.437085 , 0.000000 }, { "zooks" , 0.552804 , 0.000000 },
         { "zooms" , 0.567191 , 0.000307 }, { "zoons" , 0.604606 , 0.000000 }, { "zoril" , 0.558238 , 0.000000 },
-        { "zowie" , 0.545054 , 0.000000 }, { "zymes" , 0.667008 , 0.000000 }
+        { "zowie" , 0.545054 , 0.000000 }, { "zymes" , 0.667008 , 0.000000 }, { "inbox", 0.4, 0.0}
     };
 
     std::vector<std::string> order_words_by(const std::function<double(const word_info&)>& key_fn) {
@@ -2798,7 +2799,7 @@ namespace {
                 }
             ) |
             rv::reverse |
-            r::to_vector;
+            r::to<std::vector>();
     }
 }
 
